@@ -61,129 +61,13 @@ export default function RoomDetailPage() {
     specialRequests: "",
   })
 
-  // Mock room data with proper typing
-  const mockRooms: Room[] = [
-    {
-      id: "1",
-      name: "Deluxe Single Room",
-      type: "single" as const,
-      price: 150,
-      description: "Perfect for solo travelers, featuring a comfortable queen bed and modern amenities.",
-      amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "Flat Screen TV"],
-      image: "/deluxe-single-room.jpg",
-      available: true,
-      images: [
-        "/deluxe-single-room.jpg",
-        "/standard-double-room.jpg",
-        "/luxury-hotel-exterior-with-modern-architecture.jpg",
-      ],
-    },
-    {
-      id: "2",
-      name: "Superior Single Room",
-      type: "single" as const,
-      price: 120,
-      description: "Cozy single room with all essential amenities for a comfortable stay.",
-      amenities: ["Free WiFi", "Air Conditioning", "Room Service", "Flat Screen TV"],
-      image: "superior-single-room.jpg",
-      available: true,
-      images: [
-        "/superior-single-room.jpg",
-        "/standard-double-room.jpg",
-        "/luxury-hotel-exterior-with-modern-architecture.jpg",
-      ],
-    },
-    {
-      id: "3",
-      name: "Standard Double Room",
-      type: "double" as const,
-      price: 200,
-      description: "Spacious double room perfect for couples with a king-size bed and city views.",
-      amenities: ["Free WiFi", "Air Conditioning", "Mini Bar", "Room Service", "Flat Screen TV", "City View"],
-      image: "/standard-double-room.jpg",
-      available: true,
-      images: [
-        "/standard-double-room.jpg",
-        "/deluxe-double-room.jpg",
-        "/luxury-hotel-exterior-with-modern-architecture.jpg",
-      ],
-    },
-    {
-      id: "4",
-      name: "Deluxe Double Room",
-      type: "double" as const,
-      price: 250,
-      description: "Luxurious double room with premium amenities and stunning city panorama.",
-      amenities: [
-        "Free WiFi",
-        "Air Conditioning",
-        "Mini Bar",
-        "Room Service",
-        "Flat Screen TV",
-        "City View",
-        "Balcony",
-      ],
-      image: "/deluxe-double-room.jpg",
-      available: false,
-      images: [
-        "/deluxe-double-room.jpg",
-        "/executive-suite.jpg",
-        "/luxury-hotel-exterior-with-modern-architecture.jpg",
-      ],
-    },
-    {
-      id: "5",
-      name: "Executive Suite",
-      type: "suite" as const,
-      price: 400,
-      description: "Spacious suite with separate living area, perfect for business travelers and extended stays.",
-      amenities: [
-        "Free WiFi",
-        "Air Conditioning",
-        "Mini Bar",
-        "Room Service",
-        "Flat Screen TV",
-        "City View",
-        "Balcony",
-        "Work Desk",
-        "Sofa",
-      ],
-      image: "/executive-suite.jpg",
-      available: true,
-      images: [
-        "/executive-suite.jpg",
-        "/luxury-hotel-spa-and-wellness-center.jpg",
-        "/luxury-hotel-exterior-with-modern-architecture.jpg",
-      ],
-    },
-    {
-      id: "6",
-      name: "Presidential Suite",
-      type: "suite" as const,
-      price: 600,
-      description: "The ultimate luxury experience with premium amenities and personalized service.",
-      amenities: [
-        "Free WiFi",
-        "Air Conditioning",
-        "Mini Bar",
-        "Room Service",
-        "Flat Screen TV",
-        "City View",
-        "Balcony",
-        "Work Desk",
-        "Sofa",
-        "Jacuzzi",
-        "Butler Service",
-      ],
-      image: "/luxury-hotel-spa-and-wellness-center.jpg",
-      available: true,
-      images: [
-        "/luxury-hotel-spa-and-wellness-center.jpg",
-        "/executive-suite.jpg",
-        "/luxury-hotel-exterior-with-modern-architecture.jpg",
-      ],
-    },
-  ]
+  // Helper function to determine room type based on name
+  const determineRoomType = (name: string): "single" | "double" | "suite" => {
+    const lowerName = name.toLowerCase()
+    if (lowerName.includes("suite")) return "suite"
+    if (lowerName.includes("double") || lowerName.includes("twin")) return "double"
+    return "single"
+  }
 
   // Helper function to get max guests based on room type
   const getMaxGuests = (roomType: string) => {
@@ -199,21 +83,92 @@ export default function RoomDetailPage() {
     }
   }
 
-  useEffect(() => {
-    const fetchRoom = async () => {
-      setIsLoading(true)
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      const foundRoom = mockRooms.find((r) => r.id === params.id)
-      if (foundRoom) {
-        setRoom(foundRoom)
-        setSelectedRoom(foundRoom)
+  // Replace the fetchRoom function in app/rooms/[id]/page.tsx
+
+useEffect(() => {
+  const fetchRoom = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/rooms/${params.id}`, {
+        headers: {
+          Accept: "application/json",
+        },
+      })
+
+      const data = await response.json()
+
+      // Check if the response contains an error
+      if (!response.ok || data.error) {
+        if (response.status === 404 || data.error) {
+          console.log(`Room issue:`, data.error || `Status ${response.status}`)
+        } else {
+          console.error(`Failed to fetch room (${response.status}):`, data)
+        }
+        setRoom(null)
+        return
       }
+
+      console.log("📦 Raw API room data:", data)
+      
+      // Transform API data to match Room interface
+      let imageArray = data.images
+      if (typeof data.images === 'string') {
+        try {
+          imageArray = JSON.parse(data.images)
+        } catch (e) {
+          console.error('Failed to parse images for room:', data.name, e)
+          imageArray = []
+        }
+      }
+      
+      // Parse amenities if it's a string
+      let amenitiesArray = data.amenities
+      if (typeof data.amenities === 'string') {
+        try {
+          amenitiesArray = JSON.parse(data.amenities)
+        } catch (e) {
+          console.error('Failed to parse amenities for room:', data.name, e)
+          amenitiesArray = []
+        }
+      }
+
+      // Ensure arrays are valid
+      imageArray = Array.isArray(imageArray) ? imageArray : []
+      amenitiesArray = Array.isArray(amenitiesArray) ? amenitiesArray : []
+
+      // Get first image or placeholder
+      const firstImage = imageArray[0] || null
+      const imageUrl = firstImage 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/${firstImage}`
+        : "/placeholder-room.jpg"
+
+      const transformedRoom: Room = {
+        id: String(data.id),
+        name: data.name,
+        type: determineRoomType(data.name),
+        price: Number(data.price),
+        description: data.description || "",
+        amenities: amenitiesArray,
+        image: imageUrl,
+        available: data.status === "Available",
+        images: imageArray.map((img: string) => `${process.env.NEXT_PUBLIC_API_URL}/${img}`),
+      }
+
+      console.log("✅ Transformed room:", transformedRoom)
+      setRoom(transformedRoom)
+      setSelectedRoom(transformedRoom)
+    } catch (error) {
+      console.error("Network or parsing error:", error)
+      setRoom(null)
+    } finally {
       setIsLoading(false)
     }
+  }
 
+  if (params.id) {
     fetchRoom()
-  }, [params.id, setSelectedRoom])
+  }
+}, [params.id, setSelectedRoom])
 
   const getAmenityIcon = (amenity: string) => {
     switch (amenity.toLowerCase()) {
@@ -232,8 +187,6 @@ export default function RoomDetailPage() {
         return <CheckCircle className="w-4 h-4" />
     }
   }
-
-  
 
   const calculateTotal = () => {
     if (!bookingData.checkIn || !bookingData.checkOut || !room) return 0
@@ -258,7 +211,6 @@ export default function RoomDetailPage() {
         setShowToast(false)
       }, 4000) // Hide toast after 4 seconds
       
-   
       return
     } else {
       setGuestValidationError("")
@@ -303,7 +255,7 @@ export default function RoomDetailPage() {
       sessionStorage.setItem('pendingBooking', JSON.stringify(completeBookingData))
       
       // In production, this would make an API call to create the booking
-      alert(`Booking confirmed for ${room.name}! Total: ${calculateTotal()}`)
+      alert(`Booking confirmed for ${room.name}! Total: ₱${calculateTotal()}`)
       router.push("/profile")
     } catch (error) {
       console.error('Booking failed:', error)
@@ -333,7 +285,7 @@ export default function RoomDetailPage() {
         <Card className="text-center p-8">
           <CardContent>
             <h1 className="text-2xl font-bold mb-4">Room Not Found</h1>
-            <p className="text-muted-foreground mb-4">The room you are looking for doesnt exist.</p>
+            <p className="text-muted-foreground mb-4">The room you are looking for doesn't exist.</p>
             <Link href="/rooms">
               <Button>Back to Rooms</Button>
             </Link>
@@ -446,7 +398,7 @@ export default function RoomDetailPage() {
           <Badge className="bg-green-600/90 text-white backdrop-blur-sm">
             {room?.available ? "Available" : "Unavailable"}
           </Badge>
-          <Badge className="bg-yellow-500/90 text-green-900 backdrop-blur-sm font-bold">${room?.price}/night</Badge>
+          <Badge className="bg-yellow-500/90 text-green-900 backdrop-blur-sm font-bold">₱{room?.price}/night</Badge>
         </div>
 
         {/* Room Title Overlay */}
@@ -565,7 +517,7 @@ export default function RoomDetailPage() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-green-800 mb-1">Prime Makati Location</h4>
-                      <p className="text-sm text-green-600">Located in the heart of Makatis business district</p>
+                      <p className="text-sm text-green-600">Located in the heart of Makati's business district</p>
                     </div>
                   </div>
                   <div className="flex items-start">
@@ -606,7 +558,7 @@ export default function RoomDetailPage() {
                             <p className="text-sm text-green-600 mt-1">{room.description}</p>
                           </div>
                           <div className="ml-4 text-right">
-                            <div className="text-2xl font-bold text-yellow-600">${room.price}</div>
+                            <div className="text-2xl font-bold text-yellow-600">₱{room.price}</div>
                             <div className="text-sm text-green-700">per night</div>
                           </div>
                         </div>
@@ -817,11 +769,11 @@ export default function RoomDetailPage() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-green-700">Rate per night:</span>
-                              <span className="text-green-800 font-medium">${room.price}</span>
+                              <span className="text-green-800 font-medium">₱{room.price}</span>
                             </div>
                             <div className="flex justify-between font-semibold text-base border-t border-green-300 pt-1">
                               <span className="text-green-800">Total:</span>
-                              <span className="text-yellow-600 font-bold">${calculateTotal()}</span>
+                              <span className="text-yellow-600 font-bold">₱{calculateTotal()}</span>
                             </div>
                           </div>
                         </div>
@@ -841,7 +793,7 @@ export default function RoomDetailPage() {
                       ) : (
                         <>
                           <CreditCard className="w-4 h-4 mr-2" />
-                          Book Now - ${calculateTotal()}
+                          Book Now - ₱{calculateTotal()}
                         </>
                       )}
                     </Button>

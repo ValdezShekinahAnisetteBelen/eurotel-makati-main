@@ -103,17 +103,16 @@ export default function ProfilePage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-gradient-to-r from-green-800 to-green-700 rounded-2xl p-8 mb-8 text-white shadow-xl">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 flex items-center justify-center text-2xl font-bold text-green-900">
-              {user.username.charAt(0).toUpperCase()}
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 flex items-center justify-center text-2xl font-bold text-green-900">
+                {(user.name?.charAt(0) || "U").toUpperCase()}
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">
+                  Welcome back, <span className="text-yellow-400">{user.name || "User"}</span>!
+                </h1>
+                <p className="text-green-100">Manage your bookings and account details</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, <span className="text-yellow-400">{user.username}</span>!
-              </h1>
-              <p className="text-green-100">Manage your bookings and account details</p>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-2 text-green-100">
               <Mail className="w-4 h-4" />

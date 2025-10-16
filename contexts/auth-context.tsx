@@ -4,7 +4,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 interface User {
   id: number
-  name: string
+  name?: string
+  username?: string
   email: string
   role?: string
 }
