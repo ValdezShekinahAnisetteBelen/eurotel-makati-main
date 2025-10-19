@@ -111,19 +111,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* User Header */}
-        <div className="bg-gradient-to-r from-green-800 to-green-700 rounded-2xl p-8 mb-8 text-white shadow-xl">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 flex items-center justify-center text-2xl font-bold text-green-900">
-              {(displayUser.name?.charAt(0) || "U").toUpperCase()}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, <span className="text-yellow-400">{displayUser.name || "User"}</span>!
-              </h1>
-              <p className="text-green-100">Manage your bookings and account details</p>
-            </div>
-          </div>
-        </div>
+   
 
         {/* Bookings List */}
         <Card className="rounded-2xl border-green-200 shadow-lg py-0">

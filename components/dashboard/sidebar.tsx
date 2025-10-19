@@ -10,9 +10,8 @@ const navItems = [
   { label: "Rooms", href: "/room", icon: BedDouble },
   { label: "Reservations", href: "/reservations", icon: CalendarDays },
   { label: "Guests", href: "/guests", icon: User },
-  { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Profile", href: "/settings", icon: Settings },
 ]
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {

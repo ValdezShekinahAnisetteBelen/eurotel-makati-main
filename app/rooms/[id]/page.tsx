@@ -219,51 +219,79 @@ useEffect(() => {
   }
 
   const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || !room) return
+  e.preventDefault();
 
-    // Final validation before booking
-    const maxGuests = getMaxGuests(room.type)
-    if (bookingData.guests > maxGuests) {
-      setGuestValidationError(
-        `This ${room.type} room can accommodate a maximum of ${maxGuests} guests. Please select ${maxGuests} or fewer guests.`
-      )
-      return
-    }
+  if (!user || !room) return;
 
-    setIsBooking(true)
-    
-    try {
-      // Prepare booking data with room information
-      const completeBookingData = {
-        ...bookingData,
-        roomId: room.id,
-        roomName: room.name,
-        roomPrice: room.price,
-        roomType: room.type,
-        totalAmount: calculateTotal(),
-        nights: Math.ceil(
-          (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      }
-      
-      // Simulate booking API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Store booking data in sessionStorage for checkout process
-      sessionStorage.setItem('pendingBooking', JSON.stringify(completeBookingData))
-      
-      // In production, this would make an API call to create the booking
-      alert(`Booking confirmed for ${room.name}! Total: ₱${calculateTotal()}`)
-      router.push("/profile")
-    } catch (error) {
-      console.error('Booking failed:', error)
-      alert('Booking failed. Please try again.')
-    } finally {
-      setIsBooking(false)
-    }
+  // Final validation before booking
+  const maxGuests = getMaxGuests(room.type);
+  if (bookingData.guests > maxGuests) {
+    setGuestValidationError(
+      `This ${room.type} room can accommodate a maximum of ${maxGuests} guests. Please select ${maxGuests} or fewer guests.`
+    );
+    return;
   }
+
+  setIsBooking(true);
+
+  try {
+    // ✅ get user data from localStorage if not from context
+    const storedUser = localStorage.getItem("user");
+    const parsedUser = storedUser ? JSON.parse(storedUser).user : user;
+
+    // ✅ Prepare booking data with all fields
+    const completeBookingData = {
+      user_id: parsedUser?.id || null, // <-- important
+      roomId: room.id,
+      roomName: room.name,
+      roomPrice: room.price,
+      roomType: room.type,
+      checkIn: bookingData.checkIn,
+      checkOut: bookingData.checkOut,
+      guests: bookingData.guests,
+      firstName: parsedUser?.name?.split(" ")[0] || "Guest",
+      lastName: parsedUser?.name?.split(" ")[1] || "",
+      email: parsedUser?.email || bookingData.email,
+      phone: bookingData.phone || "N/A",
+      address: bookingData.address || "N/A",
+      specialRequests: bookingData.specialRequests || "",
+      totalAmount: calculateTotal(),
+      nights: Math.ceil(
+        (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ),
+    };
+
+    // ✅ Send booking data to backend
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bookings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(completeBookingData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("❌ Booking failed:", errorData);
+      alert(errorData.message || "Booking failed. Please try again.");
+      return;
+    }
+
+    const result = await response.json();
+    console.log("✅ Booking stored:", result);
+
+    alert(`Booking confirmed for ${room.name}! Total: ₱${calculateTotal().toLocaleString()}`);
+    router.push("/profile");
+  } catch (error) {
+    console.error("❌ Booking error:", error);
+    alert("An error occurred while processing your booking. Please try again.");
+  } finally {
+    setIsBooking(false);
+  }
+};
+
 
   const roomImages = room?.images || [room?.image || "/placeholder.svg?height=400&width=600"]
 
