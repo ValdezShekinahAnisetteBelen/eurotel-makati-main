@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation" // ✅ add useRouter
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { LogOut, Menu, X } from "lucide-react"
@@ -11,9 +11,16 @@ import PWAInstallButton from "@/components/PWAInstallButton"
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter() // ✅ initialize router
   const { user, logout } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  // ✅ handleLogout now redirects to /login
+  const handleLogout = async () => {
+    await logout()
+    setIsMobileMenuOpen(false)
+    router.push("/login") // ✅ redirect after logout
+  }
   // ✅ Navigation links (show Reservation only if logged in)
   const navItems = user
     ? [
@@ -33,12 +40,7 @@ export function Navbar() {
   const isActive = (href: string) => {
     if (href === "/") return pathname === href
     return pathname.startsWith(href)
-  }
-
-  const handleLogout = async () => {
-    await logout()
-    setIsMobileMenuOpen(false)
-  }
+  } 
 
   return (
     <nav className="bg-background border-b border-border sticky top-0 z-40 shadow-sm transition-all duration-200">
