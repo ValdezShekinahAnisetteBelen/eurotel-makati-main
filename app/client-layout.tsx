@@ -14,13 +14,19 @@ export default function ClientLayout({
 }) {
   const pathname = usePathname()
 
-  // Check if current route is an auth page
+  // ✅ Check if current route is an auth page
   const isAuthPage = pathname === "/login" || pathname === "/signup"
   
-  // Check if current route is an admin page
-  const isAdminPage = pathname.startsWith("/dashboard") || pathname.startsWith("/room")
+  // ✅ Check if current route is an admin or internal page
+  const isAdminPage =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/room") ||
+    pathname.startsWith("/reservations") ||
+    pathname.startsWith("/guests") ||
+    pathname.startsWith("/reports") ||
+    pathname.startsWith("/settings") 
 
-  // Only show Navbar and Footer for customer-facing pages
+  // ✅ Only show Navbar and Footer for public-facing pages
   const showCustomerLayout = !isAuthPage && !isAdminPage
 
   return (

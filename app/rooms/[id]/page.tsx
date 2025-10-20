@@ -139,7 +139,7 @@ useEffect(() => {
       // Get first image or placeholder
       const firstImage = imageArray[0] || null
       const imageUrl = firstImage 
-        ? `${process.env.NEXT_PUBLIC_API_URL}/${firstImage}`
+        ? `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${firstImage}`
         : "/placeholder-room.jpg"
 
       const transformedRoom: Room = {
@@ -151,7 +151,7 @@ useEffect(() => {
         amenities: amenitiesArray,
         image: imageUrl,
         available: data.status === "Available",
-        images: imageArray.map((img: string) => `${process.env.NEXT_PUBLIC_API_URL}/${img}`),
+        images: imageArray.map((img: string) => `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${img}`),
       }
 
       console.log("✅ Transformed room:", transformedRoom)
@@ -414,7 +414,7 @@ useEffect(() => {
         {/* Back Button */}
         <div className="absolute top-6 left-6">
           <Link href="/rooms">
-            <Button variant="ghost" className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm">
+            <Button variant="ghost" className="bg-white/60 hover:bg-white/80 text-green-900 backdrop-blur-md">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Rooms
             </Button>

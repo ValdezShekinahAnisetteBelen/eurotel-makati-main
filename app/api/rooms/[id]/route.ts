@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+// 🔹 GET Room
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params; // ✅ FIXED
   try {
-    const res = await fetch(`${BASE_URL}/rooms/${params.id}`, {
+    const res = await fetch(`${BASE_URL}/rooms/${id}`, {
       headers: { Accept: "application/json" },
     });
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: `Room not found with ID: ${params.id}` },
+        { error: `Room not found with ID: ${id}` },
         { status: res.status }
       );
     }
@@ -18,7 +20,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    console.error(`❌ GET /api/rooms/${params.id} failed:`, err);
+    console.error(`❌ GET /api/rooms/${id} failed:`, err);
     return NextResponse.json(
       { error: "Failed to fetch room", details: String(err) },
       { status: 500 }
@@ -26,13 +28,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// 🔹 PUT Room
+export async function PUT(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params; // ✅ FIXED
   try {
     const formData = await req.formData();
-    formData.append("_method", "PUT"); // Laravel requires this
+    formData.append("_method", "PUT"); // Laravel-style override
 
-    const res = await fetch(`${BASE_URL}/rooms/${params.id}`, {
-      method: "POST", // still POST with _method=PUT
+    const res = await fetch(`${BASE_URL}/rooms/${id}`, {
+      method: "POST",
       body: formData,
     });
 
@@ -48,16 +52,18 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+// 🔹 DELETE Room
+export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params; // ✅ FIXED
   try {
-    const res = await fetch(`${BASE_URL}/rooms/${params.id}`, {
+    const res = await fetch(`${BASE_URL}/rooms/${id}`, {
       method: "DELETE",
       headers: { Accept: "application/json" },
     });
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: `Failed to delete room with ID: ${params.id}` },
+        { error: `Failed to delete room with ID: ${id}` },
         { status: res.status }
       );
     }
@@ -65,7 +71,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    console.error(`❌ DELETE /api/rooms/${params.id} failed:`, err);
+    console.error(`❌ DELETE /api/rooms/${id} failed:`, err);
     return NextResponse.json(
       { error: "Failed to delete room", details: String(err) },
       { status: 500 }

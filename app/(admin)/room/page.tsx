@@ -29,6 +29,9 @@ interface Room {
   price: number
   status: "Available" | "Occupied"
   images?: string[]
+    discount?: number
+   featured?: boolean;
+   
 }
 
 export default function RoomsPage() {
@@ -80,6 +83,10 @@ const handleEditClick = (room: Room) => {
     formData.append("description", newRoom.description || "")
     formData.append("price", String(Number(newRoom.price)))
    newRoom.amenities.forEach(a => formData.append("amenities[]", a))
+   formData.append("featured", newRoom.featured ? "1" : "0");
+   formData.append("discount", String(newRoom.discount || 0))
+
+
 
    for (let i = 0; i < newRoom.images.length; i++) {
     formData.append("images[]", newRoom.images[i]) // ✅ array-style
@@ -110,8 +117,10 @@ const handleEditClick = (room: Room) => {
   const formData = new FormData();
   formData.append("name", editingRoom.name);
   formData.append("description", editingRoom.description || "");
-formData.append("price", String(Number(editingRoom.price) || 0));
+  formData.append("price", String(Number(editingRoom.price) || 0));
   formData.append("status", editingRoom.status);
+  formData.append("featured", editingRoom.featured ? "1" : "0");
+  formData.append("discount", String(editingRoom.discount || 0))
 
   editingRoom.amenities?.forEach((a) => formData.append("amenities[]", a));
 
@@ -170,20 +179,48 @@ const columns = [
       </Button>
     ),
   },
- {
+{
   accessorKey: "price",
-  header: "Price",
+  header: "Price (with discount)",
   cell: ({ row }: any) => {
-    const price = Number(row.original.price) || 0; // fallback to 0
-    return `₱${price.toLocaleString()}`;
+    const price = Number(row.original.price) || 0
+    const discount = Number(row.original.discount) || 0
+    const finalPrice = price - (price * discount) / 100
+    return (
+      <div>
+        <span className="font-medium text-green-700">
+          ₱{finalPrice.toLocaleString()}
+        </span>
+        {discount > 0 && (
+          <span className="text-xs text-gray-500 ml-2 line-through">
+            ₱{price.toLocaleString()}
+          </span>
+        )}
+      </div>
+    )
   },
 },
+
   { accessorKey: "status", header: "Status", cell: ({ row }: any) => (
       <span className={`font-medium ${row.original.status === "Available" ? "text-green-600" : "text-red-600"}`}>
         {row.original.status}
       </span>
     )
   },
+  {
+  accessorKey: "featured",
+  header: "Featured",
+  cell: ({ row }: any) => (
+    <span
+      className={`font-medium ${
+        row.original.featured ? "text-blue-600" : "text-gray-400"
+      }`}
+    >
+      {row.original.featured ? "Yes" : "No"}
+    </span>
+  ),
+},
+
   { accessorKey: "description", header: "Description", cell: ({ row }: any) => <span className="line-clamp-2">{row.original.description}</span> },
   { accessorKey: "amenities", header: "Amenities", cell: ({ row }: any) => <RoomAmenitiesCell amenities={row.original.amenities || []} /> },
   { accessorKey: "images", header: "Images", cell: ({ row }: any) => <RoomImagesCell images={row.original.images || []} /> },
@@ -274,6 +311,12 @@ const table = useReactTable({
                         value={newRoom.price}
                         onChange={(e) => setNewRoom({ ...newRoom, price: e.target.value })}
                     />
+                    <Input
+                      type="number"
+                      placeholder="Discount (%)"
+                      value={newRoom.discount || ""}
+                      onChange={(e) => setNewRoom({ ...newRoom, discount: Number(e.target.value) })}
+                    />
 
                     {/* Amenities Checkboxes */}
                     <div>
@@ -306,6 +349,15 @@ const table = useReactTable({
                         ))}
                         </div>
                     </div>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={newRoom.featured || false}
+                    onChange={(e) => setNewRoom({ ...newRoom, featured: e.target.checked })}
+                  />
+                  Featured
+                </label>
 
                     {/* Image Upload */}
                   <Input
@@ -408,6 +460,20 @@ const table = useReactTable({
                                 />
                               </div>
 
+                              <div className="space-y-1">
+                                <Label htmlFor="edit-discount">Discount (%)</Label>
+                                <Input
+                                  id="edit-discount"
+                                  type="number"
+                                  placeholder="Discount"
+                                  value={editingRoom.discount || 0}
+                                  onChange={(e) =>
+                                    setEditingRoom({ ...editingRoom, discount: Number(e.target.value) })
+                                  }
+                                />
+                              </div>
+
+
                               {/* Status */}
                               <div className="space-y-1">
                                 <Label htmlFor="edit-status">Status</Label>
@@ -459,6 +525,19 @@ const table = useReactTable({
                                   ))}
                                 </div>
                               </div>
+
+                              <div className="space-y-1">
+                              <Label htmlFor="edit-featured">Featured</Label>
+                              <input
+                                id="edit-featured"
+                                type="checkbox"
+                                checked={editingRoom.featured || false}
+                                onChange={(e) =>
+                                  setEditingRoom({ ...editingRoom, featured: e.target.checked })
+                                }
+                              />
+                            </div>
+
 
                               {/* Images */}
                               <div className="space-y-1">
@@ -570,9 +649,6 @@ const table = useReactTable({
                 </DropdownMenu>
             </div>
             </CardHeader>
-
-            
-
 
         <CardContent>
           {/* Search */}

@@ -151,6 +151,7 @@ export default function AdminBookingsPage() {
                     <Eye className="w-4 h-4" /> View Details
                   </Button>
 
+                  {/* Pending → Confirmed / Cancelled */}
                   {booking.status === "pending" && (
                     <>
                       <Button
@@ -171,7 +172,54 @@ export default function AdminBookingsPage() {
                       </Button>
                     </>
                   )}
+
+                  {/* Confirmed → Completed / Cancelled */}
+                  {booking.status === "confirmed" && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                        onClick={() => updateStatus(booking.id, "completed")}
+                        disabled={actionLoading === booking.id}
+                      >
+                        {actionLoading === booking.id ? "Processing..." : "Mark as Completed"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-red-500 hover:bg-red-600 text-white"
+                        onClick={() => updateStatus(booking.id, "cancelled")}
+                        disabled={actionLoading === booking.id}
+                      >
+                        {actionLoading === booking.id ? "Processing..." : "Cancel"}
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Completed → Optional revert (admin only) */}
+                  {booking.status === "completed" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateStatus(booking.id, "pending")}
+                      disabled={actionLoading === booking.id}
+                    >
+                      {actionLoading === booking.id ? "Processing..." : "Revert to Pending"}
+                    </Button>
+                  )}
+
+                  {/* Cancelled → Optional revert */}
+                  {booking.status === "cancelled" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateStatus(booking.id, "pending")}
+                      disabled={actionLoading === booking.id}
+                    >
+                      {actionLoading === booking.id ? "Processing..." : "Reopen"}
+                    </Button>
+                  )}
                 </div>
+
               </CardContent>
             </Card>
           ))}

@@ -13,27 +13,35 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
-// Sample reservation stats chart data
-const reservationData = [
-  { month: "Jan", reservations: 120 },
-  { month: "Feb", reservations: 95 },
-  { month: "Mar", reservations: 150 },
-  { month: "Apr", reservations: 130 },
-  { month: "May", reservations: 180 },
-  { month: "Jun", reservations: 200 },
-]
+interface Booking {
+  id: number
+  first_name: string
+  last_name: string
+  room_name: string
+  check_in: string
+  check_out: string
+  total_amount: number
+  status: string
+}
 
-// Sample recent reservations table
-const reservations = [
-  { id: 1, guest: "Juan Dela Cruz", room: "Deluxe Room", checkIn: "2025-09-15", checkOut: "2025-09-17" },
-  { id: 2, guest: "Maria Clara", room: "Suite Room", checkIn: "2025-09-14", checkOut: "2025-09-16" },
-  { id: 3, guest: "Jose Rizal", room: "Standard Room", checkIn: "2025-09-13", checkOut: "2025-09-14" },
-]
+interface DashboardStats {
+  totalBookings: number
+  totalRooms: number
+  availableRooms: number
+  monthlyRevenue: number
+}
 
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<{ name: string; role: string } | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [rooms, setRooms] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // ✅ Use environment variables
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+  const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
@@ -46,10 +54,57 @@ export default function DashboardPage() {
 
     setUser(JSON.parse(storedUser))
     setToken(storedToken)
-    console.log("Token:", storedToken)
   }, [router])
 
-  if (!user) return <p>Loading...</p>
+  useEffect(() => {
+    if (!token) return
+    fetchData()
+  }, [token])
+
+  const fetchData = async () => {
+    try {
+      const [bookingsRes, roomsRes] = await Promise.all([
+        fetch(`${API_URL}/bookings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_URL}/rooms`),
+      ])
+
+      if (!bookingsRes.ok || !roomsRes.ok) {
+        throw new Error("Failed to fetch dashboard data.")
+      }
+
+      const bookingsData = await bookingsRes.json()
+      const roomsData = await roomsRes.json()
+
+      setBookings(bookingsData.bookings || [])
+      setRooms(roomsData)
+    } catch (error) {
+      console.error("Error fetching data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading || !user) return <p>Loading...</p>
+
+  // Compute dashboard statistics
+  const stats: DashboardStats = {
+    totalBookings: bookings.length,
+    totalRooms: rooms.length,
+    availableRooms: rooms.filter((r) => r.status === "Available").length,
+    monthlyRevenue: bookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0),
+  }
+
+  // Monthly reservations chart data (group by month)
+  const reservationData = Object.values(
+    bookings.reduce((acc: any, booking) => {
+      const month = new Date(booking.check_in).toLocaleString("default", { month: "short" })
+      acc[month] = acc[month] || { month, reservations: 0 }
+      acc[month].reservations += 1
+      return acc
+    }, {})
+  )
 
   return (
     <div className="space-y-6">
@@ -60,7 +115,7 @@ export default function DashboardPage() {
             <CardTitle>Total Reservations</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">320</p>
+            <p className="text-2xl font-bold">{stats.totalBookings}</p>
           </CardContent>
         </Card>
 
@@ -69,7 +124,7 @@ export default function DashboardPage() {
             <CardTitle>Available Rooms</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">45</p>
+            <p className="text-2xl font-bold">{stats.availableRooms}</p>
           </CardContent>
         </Card>
 
@@ -78,7 +133,9 @@ export default function DashboardPage() {
             <CardTitle>Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">₱520,000</p>
+            <p className="text-2xl font-bold">
+              ₱{stats.monthlyRevenue.toLocaleString()}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -96,7 +153,12 @@ export default function DashboardPage() {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="reservations" stroke="#2563eb" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="reservations"
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -117,16 +179,20 @@ export default function DashboardPage() {
                 <th className="text-left py-2">Room</th>
                 <th className="text-left py-2">Check-In</th>
                 <th className="text-left py-2">Check-Out</th>
+                <th className="text-left py-2">Status</th>
               </tr>
             </thead>
             <tbody>
-              {reservations.map((res) => (
+              {bookings.slice(0, 5).map((res) => (
                 <tr key={res.id} className="border-b hover:bg-gray-50">
                   <td className="py-2">{res.id}</td>
-                  <td className="py-2">{res.guest}</td>
-                  <td className="py-2">{res.room}</td>
-                  <td className="py-2">{res.checkIn}</td>
-                  <td className="py-2">{res.checkOut}</td>
+                  <td className="py-2">
+                    {res.first_name} {res.last_name}
+                  </td>
+                  <td className="py-2">{res.room_name}</td>
+                  <td className="py-2">{res.check_in}</td>
+                  <td className="py-2">{res.check_out}</td>
+                  <td className="py-2 capitalize">{res.status}</td>
                 </tr>
               ))}
             </tbody>

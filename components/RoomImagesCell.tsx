@@ -13,6 +13,9 @@ export function RoomImagesCell({ images }: RoomImagesCellProps) {
   const [open, setOpen] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
+  // ✅ Use the environment variable instead of a fixed URL
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL
+
   if (!images?.length) return <span>No images</span>
 
   return (
@@ -22,7 +25,7 @@ export function RoomImagesCell({ images }: RoomImagesCellProps) {
         {images.slice(0, 3).map((img, i) => (
           <img
             key={i}
-            src={`http://localhost:8000/${img}`}
+            src={`${baseUrl}/${img}`}
             alt="room"
             className="h-10 w-10 rounded-full border-2 border-white object-cover cursor-pointer"
             onClick={() => {
@@ -48,7 +51,6 @@ export function RoomImagesCell({ images }: RoomImagesCellProps) {
       {/* Slider Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl w-full">
-          {/* Accessibility: Hidden DialogTitle */}
           <DialogTitle className="sr-only">Room Images</DialogTitle>
 
           <div className="relative flex items-center justify-center">
@@ -68,7 +70,7 @@ export function RoomImagesCell({ images }: RoomImagesCellProps) {
 
             {/* Full image */}
             <img
-              src={`http://localhost:8000/${images[currentIndex]}`}
+              src={`${baseUrl}/${images[currentIndex]}`}
               alt="room full"
               className="max-h-[70vh] w-auto rounded-lg object-contain"
             />
