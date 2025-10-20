@@ -41,11 +41,13 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(user))
       localStorage.setItem("token", data.token || data.access_token || "")
 
-      if (data.user?.role === "admin") {
-        router.push("/dashboard")
+    if (data.user?.role === "admin") {
+        window.location.href = "/dashboard"
       } else {
-        router.push("/")
+        window.location.href = "/"
       }
+
+
     } catch (err) {
       console.error(err)
       setError("Something went wrong, please try again.")
