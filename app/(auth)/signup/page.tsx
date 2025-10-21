@@ -5,6 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { toast } from "sonner"
+
 
 export default function SignupPage() {
   const [name, setName] = useState("")
@@ -46,7 +48,10 @@ export default function SignupPage() {
         throw new Error(data.error || "Signup failed")
       }
 
-      alert("Account created successfully! Please log in.")
+      toast.success("Account created successfully!", {
+        description: "Redirecting you to the login page...",
+      })
+
       window.location.href = "/login"
     } catch (err: any) {
       console.error("Error signing up:", err)

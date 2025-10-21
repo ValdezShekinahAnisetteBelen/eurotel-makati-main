@@ -7,9 +7,11 @@ import { CustomLoader } from "@/components/custom-loader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, Users, CreditCard, Phone, Mail, User, X } from "lucide-react"
+import { Calendar, MapPin, Users, CreditCard } from "lucide-react"
 import axios from "axios"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { usePathname } from "next/navigation"
+import { toast } from "sonner"
 
 interface Booking {
   id: number
@@ -36,6 +38,7 @@ export default function ProfilePage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [contentReady, setContentReady] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const pathname = usePathname()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -86,20 +89,65 @@ export default function ProfilePage() {
     }
   }
 
-  const handleCancelBooking = async (bookingId: number) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return
+const handleCancelBooking = (bookingId: number) => {
+  toast.custom((id) => (
+    <div className="flex flex-col gap-2 bg-yellow-50 border border-green-300 text-green-900 p-4 rounded-xl shadow-lg w-[340px]">
+      <div className="flex items-start gap-2">
+        <svg
+          className="w-5 h-5 text-yellow-600 mt-0.5"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M8.257 3.099c.366-.756 1.42-.756 1.786 0l7.451 15.373A1 1 0 0116.451 20H3.549a1 1 0 01-.894-1.528L8.257 3.1zM11 15a1 1 0 10-2 0 1 1 0 002 0zm-.25-2.75a.75.75 0 01-1.5 0V8a.75.75 0 011.5 0v4.25z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <div>
+          <p className="font-semibold">Are you sure you want to cancel this booking?</p>
+          <p className="text-sm text-green-800">This action cannot be undone.</p>
+        </div>
+      </div>
 
-    try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/cancel`)
-      setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b))
-      )
-      alert("Booking cancelled successfully!")
-    } catch (error) {
-      console.error("Failed to cancel booking:", error)
-      alert("Failed to cancel booking. Try again later.")
-    }
-  }
+      <div className="flex justify-end gap-2 mt-3">
+        <button
+          onClick={() => toast.dismiss(id)}
+          className="px-3 py-1.5 text-sm rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 transition"
+        >
+          No, Keep Booking
+        </button>
+        <button
+          onClick={async () => {
+            toast.dismiss(id)
+            toast.loading("Cancelling booking...")
+
+            try {
+              await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/cancel`)
+              setBookings((prev) =>
+                prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b))
+              )
+              toast.dismiss() // remove loading
+              toast.success("Booking cancelled successfully!", {
+                description: "Your booking has been marked as cancelled.",
+              })
+            } catch (error) {
+              console.error("Failed to cancel booking:", error)
+              toast.dismiss()
+              toast.error("Cancellation failed", {
+                description: "Something went wrong. Please try again later.",
+              })
+            }
+          }}
+          className="px-3 py-1.5 text-sm rounded-md bg-green-600 hover:bg-green-700 text-white transition"
+        >
+          Yes, Cancel
+        </button>
+      </div>
+    </div>
+  ))
+}
+
 
   if (pageLoading || !contentReady) {
     return <CustomLoader isLoading={pageLoading} onLoadingComplete={handleLoadingComplete} />
@@ -111,19 +159,22 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* User Header */}
-        <div className="bg-gradient-to-r from-green-800 to-green-700 rounded-2xl p-8 mb-8 text-white shadow-xl">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 flex items-center justify-center text-2xl font-bold text-green-900">
-              {(displayUser.name?.charAt(0) || "U").toUpperCase()}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, <span className="text-yellow-400">{displayUser.name || "User"}</span>!
-              </h1>
-              <p className="text-green-100">Manage your bookings and account details</p>
+        {pathname !== "/reservation" && (
+          <div className="bg-gradient-to-r from-green-800 to-green-700 rounded-2xl p-8 mb-8 text-white shadow-xl">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 flex items-center justify-center text-2xl font-bold text-green-900">
+                {(displayUser.name?.charAt(0) || "U").toUpperCase()}
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">
+                  Welcome back, <span className="text-yellow-400">{displayUser.name || "User"}</span>!
+                </h1>
+                <p className="text-green-100">Manage your bookings and account details</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
 
         {/* Bookings List */}
         <Card className="rounded-2xl border-green-200 shadow-lg py-0">
@@ -132,9 +183,7 @@ export default function ProfilePage() {
               <Calendar className="w-5 h-5" />
               Your Bookings
             </CardTitle>
-            <CardDescription className="text-green-100">
-              View and manage your hotel reservations
-            </CardDescription>
+            <CardDescription className="text-green-100">View and manage your hotel reservations</CardDescription>
           </CardHeader>
 
           <CardContent className="p-6">
@@ -164,22 +213,16 @@ export default function ProfilePage() {
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-xl font-semibold text-green-800 mb-1">
-                          {booking.room?.name || "Room"}
-                        </h3>
+                        <h3 className="text-xl font-semibold text-green-800 mb-1">{booking.room?.name || "Room"}</h3>
                         <p className="text-green-600">Booking #{booking.id}</p>
                       </div>
-                      <Badge className={`${getStatusColor(booking.status)} capitalize`}>
-                        {booking.status}
-                      </Badge>
+                      <Badge className={`${getStatusColor(booking.status)} capitalize`}>{booking.status}</Badge>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-700">
-                          Room ID: {booking.room?.id || "N/A"}
-                        </span>
+                        <span className="text-sm text-green-700">Room ID: {booking.room?.id || "N/A"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-green-600" />
@@ -231,43 +274,57 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      {/* ✅ Booking Details Modal */}
       <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader className="flex justify-between items-center">
-            <DialogTitle>Booking Details</DialogTitle>
-            <DialogClose asChild>
-              <Button variant="ghost" size="sm">
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogClose>
+        <DialogContent className="max-w-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-yellow-50">
+          <DialogHeader className="border-b-2 border-green-200 pb-4">
+            <DialogTitle className="text-2xl font-bold text-green-800">Booking Details</DialogTitle>
           </DialogHeader>
 
           {selectedBooking && (
-            <div className="space-y-2 mt-2 text-sm text-gray-700">
-              <p>
-                <strong>Room:</strong> {selectedBooking.room?.name || "N/A"}
-              </p>
-              <p>
-                <strong>Check-in:</strong>{" "}
-                {new Date(selectedBooking.check_in).toLocaleDateString()}
-              </p>
-              <p>
-                <strong>Check-out:</strong>{" "}
-                {new Date(selectedBooking.check_out).toLocaleDateString()}
-              </p>
-              <p>
-                <strong>Guests:</strong> {selectedBooking.guests}
-              </p>
-              <p>
-                <strong>Total Amount:</strong> ₱{selectedBooking.total_amount.toLocaleString()}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedBooking.status}
-              </p>
-              <p>
-                <strong>Room Description:</strong> {selectedBooking.room?.description || "N/A"}
-              </p>
+            <div className="space-y-4 mt-4">
+              <div className="bg-white rounded-lg p-4 border border-green-100">
+                <p className="text-sm mb-3">
+                  <strong className="text-green-800">Room:</strong>{" "}
+                  <span className="text-green-700">{selectedBooking.room?.name || "N/A"}</span>
+                </p>
+                <p className="text-sm mb-3">
+                  <strong className="text-green-800">Check-in:</strong>{" "}
+                  <span className="text-green-700">{new Date(selectedBooking.check_in).toLocaleDateString()}</span>
+                </p>
+                <p className="text-sm mb-3">
+                  <strong className="text-green-800">Check-out:</strong>{" "}
+                  <span className="text-green-700">{new Date(selectedBooking.check_out).toLocaleDateString()}</span>
+                </p>
+                <p className="text-sm mb-3">
+                  <strong className="text-green-800">Guests:</strong>{" "}
+                  <span className="text-green-700">{selectedBooking.guests}</span>
+                </p>
+                <p className="text-sm mb-3">
+                  <strong className="text-green-800">Total Amount:</strong>{" "}
+                  <span className="font-semibold text-yellow-700">
+                    ₱{selectedBooking.total_amount.toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-sm mb-3">
+                  <strong className="text-green-800">Status:</strong>{" "}
+                  <Badge className={`ml-2 ${getStatusColor(selectedBooking.status)} capitalize`}>
+                    {selectedBooking.status}
+                  </Badge>
+                </p>
+                <p className="text-sm">
+                  <strong className="text-green-800">Description:</strong>{" "}
+                  <span className="text-green-700">{selectedBooking.room?.description || "N/A"}</span>
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => setSelectedBooking(null)}
+                  className="flex-1 bg-gradient-to-r from-green-700 to-green-600 hover:from-green-800 hover:to-green-700 text-white"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

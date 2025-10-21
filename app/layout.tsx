@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import ClientLayout from "./client-layout"
 import FloatingSocialIcons from "@/components/FloatingSocialIcons"
+import { Toaster } from "@/components/ui/sonner" // ✅ Added Sonner Toaster
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -81,13 +82,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Eurotel Hotel - Luxury Accommodation",
-    description: "Experience unparalleled luxury and comfort at Eurotel Hotel. Book your perfect stay today.",
+    description:
+      "Experience unparalleled luxury and comfort at Eurotel Hotel. Book your perfect stay today.",
   },
   viewport: "width=device-width, initial-scale=1",
   themeColor: "#059669",
-  // PWA Manifest
   manifest: "/manifest.json",
-  // Additional PWA meta tags
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
@@ -120,7 +120,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    >
       <head>
         {/* PWA Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
@@ -129,17 +132,35 @@ export default function RootLayout({
         <meta name="display" content="standalone" />
         <meta name="scope" content="/" />
         <meta name="start_url" content="/" />
-        
+
         {/* Apple Touch Icons */}
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-        <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-152x152.png" />
-        
+        <link
+          rel="apple-touch-icon"
+          href="/icons/apple-touch-icon.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="152x152"
+          href="/icons/icon-152x152.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/icons/apple-touch-icon.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="167x167"
+          href="/icons/icon-152x152.png"
+        />
+
         {/* Microsoft Tiles */}
-        <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+        <meta
+          name="msapplication-TileImage"
+          content="/icons/icon-144x144.png"
+        />
         <meta name="msapplication-TileColor" content="#059669" />
-        
+
         {/* Splash Screens */}
         <link
           rel="apple-touch-startup-image"
@@ -165,6 +186,7 @@ export default function RootLayout({
       <body className="font-sans">
         <ClientLayout>{children}</ClientLayout>
         <FloatingSocialIcons />
+        <Toaster richColors position="top-right" /> {/* ✅ Global Toast Notifications */}
       </body>
     </html>
   )

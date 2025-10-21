@@ -37,6 +37,7 @@ import {
 import Link from "next/link"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Image from "next/image"
+import { toast } from "sonner"
 
 export default function RoomDetailPage() {
   const params = useParams()
@@ -239,9 +240,8 @@ useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const parsedUser = storedUser ? JSON.parse(storedUser).user : user;
 
-    // ✅ Prepare booking data with all fields
     const completeBookingData = {
-      user_id: parsedUser?.id || null, // <-- important
+      user_id: parsedUser?.id || null,
       roomId: room.id,
       roomName: room.name,
       roomPrice: room.price,
@@ -249,8 +249,8 @@ useEffect(() => {
       checkIn: bookingData.checkIn,
       checkOut: bookingData.checkOut,
       guests: bookingData.guests,
-      firstName: parsedUser?.name?.split(" ")[0] || "Guest",
-      lastName: parsedUser?.name?.split(" ")[1] || "",
+      firstName: bookingData.firstName,
+      lastName: bookingData.lastName,
       email: parsedUser?.email || bookingData.email,
       phone: bookingData.phone || "N/A",
       address: bookingData.address || "N/A",
@@ -275,18 +275,22 @@ useEffect(() => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error("❌ Booking failed:", errorData);
-      alert(errorData.message || "Booking failed. Please try again.");
+     toast.error(errorData.message || "Booking failed. Please try again.");
       return;
     }
 
     const result = await response.json();
     console.log("✅ Booking stored:", result);
 
-    alert(`Booking confirmed for ${room.name}! Total: ₱${calculateTotal().toLocaleString()}`);
-    router.push("/profile");
+   toast.success(`Booking confirmed for ${room.name}!`, {
+    description: `Total: ₱${calculateTotal().toLocaleString()}`,
+    duration: 4000,
+  });
+  router.push("/profile");
+
   } catch (error) {
     console.error("❌ Booking error:", error);
-    alert("An error occurred while processing your booking. Please try again.");
+   toast.error("An error occurred while processing your booking. Please try again.");
   } finally {
     setIsBooking(false);
   }

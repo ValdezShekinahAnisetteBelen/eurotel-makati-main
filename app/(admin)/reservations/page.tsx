@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, CreditCard, Mail, Eye } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 interface Booking {
   id: number
@@ -80,8 +81,10 @@ export default function AdminBookingsPage() {
       await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/status`, { status })
       fetchBookings()
     } catch (error) {
-      console.error("Failed to update booking:", error)
-      alert("Failed to update booking status")
+    console.error("Failed to update booking:", error)
+    toast.error("Failed to update booking status", {
+      description: "Please try again later.",
+    })  
     } finally {
       setActionLoading(null)
     }

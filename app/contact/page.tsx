@@ -36,17 +36,35 @@ export default function ContactPage() {
     setPageLoading(false)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    // Mock API call
-    setTimeout(() => {
-      setLoading(false)
-      setSubmitted(true)
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" })
-    }, 2000)
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contact`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setSubmitted(true);
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    } else {
+      alert(data.message || "Failed to send message.");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Something went wrong. Please try again later.");
+  } finally {
+    setLoading(false);
   }
+};
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({
@@ -87,14 +105,18 @@ export default function ContactPage() {
 
             {/* Quick contact buttons */}
             <div className="flex flex-wrap justify-center gap-4 pt-6">
-              <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm px-6 py-3 rounded-full transition-all duration-300 hover:scale-105">
-                <Phone className="w-4 h-4 mr-2" />
-                Call Now
-              </Button>
-              <Button className="bg-yellow-500 hover:bg-yellow-400 text-green-900 font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105">
-                <Mail className="w-4 h-4 mr-2" />
-                Email Us
-              </Button>
+              <a href="tel:+15551234567">
+                <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm px-6 py-3 rounded-full transition-all duration-300 hover:scale-105">
+                  <Phone className="w-4 h-4 mr-2" />
+                  Call Now
+                </Button>
+              </a>
+              <a href="mailto:info@eurotel.com">
+                <Button className="bg-yellow-500 hover:bg-yellow-400 text-green-900 font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email Us
+                </Button>
+              </a>
             </div>
           </div>
         </div>
